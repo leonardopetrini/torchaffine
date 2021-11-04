@@ -1,43 +1,52 @@
+"""
+    Compute displacement field and apply it to x.
+"""
 import torch
 from .utils import zero
 
-def transform_coordinates(n, matrix=None, translation=None, center=None):
+
+def displacement_field(n, matrix=None, translation=None, center=None):
     """
+    Compute displacement field for given linear transformations.
     :param int n: image size.
     :param torch.Tensor matrix: transformation matrices. Shape: [B, 2, 2]
     :param torch.Tensor translation: translation vectors. Shape: [B, 2]
     :param torch.Tensor center: transformation centers. Shape: [B, 2]
-    :return torch.Tensor: new transformed coordinates. [B, 2, n, n]
+    :return torch.Tensor: displacement field. [B, 2, n, n]
     """
     if matrix is None:
         matrix = torch.eye(2)[None]
     center, translation = zero(center), zero(translation)
+
     X = torch.stack(torch.meshgrid(torch.arange(0, n), torch.arange(0, n))).float().flip(0)
-    return torch.einsum('bji,jnm->binm', matrix, X - center[0]) + center - translation
+    return torch.einsum('bji,bjnm->binm', matrix, X[None] - center) + translation
 
 
-def tx(x, new_coordinates):
+def apply_displacement(x, tau):
     """
-    Remap `x` to new coordinates.
+    Apply the displacement field `tau` to the pixels positions of image `x`.
     :param torch.Tensor x: original image. [B, ch, n, n]
-    :param torch.Tensor new_coordinates: new image coordinates. [B, n, n]
-    :return torch.Tensor: x' [B, ch, n, n].
+    :param torch.Tensor tau: displacement field. [B, n, n]
+    :return torch.Tensor: `\tau x` [B, ch, n, n].
     """
-    return torch.stack([remap(x[i], *new_coordinates[i], interp='linear') for i in range(len(x))])
+    return torch.stack([remap(x[i], *tau[i], interp='linear') for i in range(len(x))])
 
-def remap(a, xn, yn, interp):
+
+def remap(a, dx, dy, interp):
     """
     adapted from https://github.com/pcsl-epfl/diffeomorphism
     :param a: Tensor of shape [..., y, x]
-    :param xn: Tensor of shape [y, x]
-    :param yn: Tensor of shape [y, x]
+    :param dx: Tensor of shape [y, x]
+    :param dy: Tensor of shape [y, x]
     :param interp: interpolation method
     """
     n, m = a.shape[-2:]
-    assert xn.shape == (n, m) and yn.shape == (n, m), 'Image(s) and displacement fields shapes should match.'
+    assert dx.shape == (n, m) and dy.shape == (n, m), 'Image(s) and displacement fields shapes should match.'
 
-    xn = xn.clamp(0, m-1)
-    yn = yn.clamp(0, n-1)
+    y, x = torch.meshgrid(torch.arange(n, dtype=dx.dtype), torch.arange(m, dtype=dx.dtype))
+
+    xn = (x - dx).clamp(0, m-1)
+    yn = (y - dy).clamp(0, n-1)
 
     if interp == 'linear':
         xf = xn.floor().long()
@@ -53,7 +62,7 @@ def remap(a, xn, yn, interp):
     if interp == 'gaussian':
         # can be implemented more efficiently by adding a cutoff to the Gaussian
         sigma = 0.4715
-        y, x = torch.meshgrid(torch.arange(n, dtype=xn.dtype), torch.arange(m, dtype=xn.dtype))
+
         dx = (xn[:, :, None, None] - x)
         dy = (yn[:, :, None, None] - y)
 

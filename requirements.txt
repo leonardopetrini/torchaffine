@@ -1,0 +1,2 @@
+setuptools~=45.2.0.post20200210
+torch~=1.10.0

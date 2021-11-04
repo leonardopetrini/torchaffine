@@ -1,3 +1,6 @@
+"""
+    Support functions.
+"""
 import torch
 
 def zero(x):
@@ -6,3 +9,11 @@ def zero(x):
     else:
         x = x[..., None, None]
     return x
+
+
+def totensor(x, y):
+    if isinstance(x, (float, int)):
+        x, y = torch.tensor(x), torch.tensor(y)
+    if not len(x.shape):
+        x, y = x[None], y[None]
+    return torch.stack([x, y]).t()
