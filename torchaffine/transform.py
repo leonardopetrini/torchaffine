@@ -14,12 +14,12 @@ def displacement_field(n, matrix=None, translation=None, center=None):
     :param torch.Tensor center: transformation centers. Shape: [B, 2]
     :return torch.Tensor: displacement field. [B, 2, n, n]
     """
-    if matrix is None:
-        matrix = torch.eye(2)[None]
+    if matrix is None or isinstance(matrix, (int, float)):
+        matrix = torch.zeros(2, 2)[None]
     center, translation = zero(center), zero(translation)
 
     X = torch.stack(torch.meshgrid(torch.arange(0, n), torch.arange(0, n))).float().flip(0)
-    return torch.einsum('bji,bjnm->binm', matrix, X[None] - center) + translation
+    return torch.einsum('bij,bjnm->binm', matrix, X[None] - center) + translation
 
 
 def apply_displacement(x, tau):

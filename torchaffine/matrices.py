@@ -45,5 +45,3 @@ def pure_shear_matrix(a, b):
         a = a[None]
         b = b[None]
     return torch.cat([a, b, b, -a]).reshape(2, 2, -1).permute(2, 0, 1)
-
-
