@@ -3,8 +3,8 @@ from .matrices import *
 from .utils import *
 
 
-def transform(x, translation_x=0., translation_y=0., rotation=0., compression=0.,
-              shear_a=0., shear_b=0., center_x=0., center_y=0.):
+def transform(x, translation_x=0., translation_y=0., rotation=None, compression=None,
+              shear_a=None, shear_b=None, center_x=0., center_y=0.):
     """
     Apply linear transformations to (an) image(s).
     :param torch.Tensor x: batch of input images to transform. Shape: [B, ch, n, n]
@@ -27,9 +27,9 @@ def transform(x, translation_x=0., translation_y=0., rotation=0., compression=0.
     T = totensor(translation_x, translation_y).to(device)
     Ce = totensor(center_x, center_y).to(device)
 
-    R = rotation_matrix(rotation) if rotation not in [0] else torch.zeros(1, 2, 2)
-    Co = compression_matrix(compression) if compression not in [0] else torch.zeros(1, 2, 2)
-    S = pure_shear_matrix(shear_a, shear_b) if shear_a not in [0] or shear_b not in [0] else torch.zeros(1, 2, 2)
+    R = rotation_matrix(rotation) if rotation is not None else torch.zeros(1, 2, 2)
+    Co = compression_matrix(compression) if compression is not None else torch.zeros(1, 2, 2)
+    S = pure_shear_matrix(shear_a, shear_b) if shear_a is not None or shear_b  is not None else torch.zeros(1, 2, 2)
 
     matrix = (R + Co + S).to(device)
 
