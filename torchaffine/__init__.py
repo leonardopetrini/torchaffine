@@ -27,9 +27,9 @@ def transform(x, translation_x=0., translation_y=0., rotation=0., compression=0.
     T = totensor(translation_x, translation_y).to(device)
     Ce = totensor(center_x, center_y).to(device)
 
-    R = rotation_matrix(rotation) if rotation else 0
-    Co = compression_matrix(compression) if compression else 0
-    S = pure_shear_matrix(shear_a, shear_b) if shear_a or shear_b else 0
+    R = rotation_matrix(rotation) if rotation not in [0] else torch.zeros(1, 2, 2)
+    Co = compression_matrix(compression) if compression not in [0] else torch.zeros(1, 2, 2)
+    S = pure_shear_matrix(shear_a, shear_b) if shear_a not in [0] or shear_b not in [0] else torch.zeros(1, 2, 2)
 
     matrix = (R + Co + S).to(device)
 

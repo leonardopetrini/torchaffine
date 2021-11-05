@@ -16,7 +16,7 @@ def rotation_matrix(theta):
         theta = theta[None]
     theta = theta / 180 * math.pi
     sin, cos = theta.sin(), theta.cos()
-    return torch.cat([cos - 1, -sin, sin, cos - 1]).reshape(2, 2, -1).permute(2, 0, 1)
+    return - torch.cat([cos - 1, -sin, sin, cos - 1]).reshape(2, 2, -1).permute(2, 0, 1)
 
 
 def compression_matrix(s):
