@@ -18,7 +18,8 @@ def displacement_field(n, matrix=None, translation=None, center=None):
         matrix = torch.zeros(2, 2)[None]
     center, translation = zero(center), zero(translation)
 
-    X = torch.stack(torch.meshgrid(torch.arange(0, n), torch.arange(0, n))).float().flip(0)
+    ar = torch.arange(0, n, dtype=matrix.dtype, device=matrix.device)
+    X = torch.stack(torch.meshgrid(ar, ar)).flip(0)
     return torch.einsum('bij,bjnm->binm', matrix, X[None] - center) + translation
 
 
@@ -43,7 +44,7 @@ def remap(a, dx, dy, interp):
     n, m = a.shape[-2:]
     assert dx.shape == (n, m) and dy.shape == (n, m), 'Image(s) and displacement fields shapes should match.'
 
-    y, x = torch.meshgrid(torch.arange(n, dtype=dx.dtype), torch.arange(m, dtype=dx.dtype))
+    y, x = torch.meshgrid(torch.arange(n, dtype=dx.dtype, device=dx.device), torch.arange(m, dtype=dx.dtype, device=dx.device))
 
     xn = (x - dx).clamp(0, m-1)
     yn = (y - dy).clamp(0, n-1)

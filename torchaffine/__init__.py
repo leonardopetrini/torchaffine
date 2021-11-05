@@ -19,17 +19,21 @@ def transform(x, translation_x=0., translation_y=0., rotation=0., compression=0.
     :return torch.Tensor: transformed image.
     """
 
+    device = x.device
+
     n = x.shape[-1]
     B = x.shape[0]
 
-    T = totensor(translation_x, translation_y)
-    Ce = totensor(center_x, center_y)
+    T = totensor(translation_x, translation_y).to(device)
+    Ce = totensor(center_x, center_y).to(device)
 
     R = rotation_matrix(rotation) if rotation else 0
     Co = compression_matrix(compression) if compression else 0
     S = pure_shear_matrix(shear_a, shear_b) if shear_a or shear_b else 0
 
-    tau = displacement_field(n, matrix=R + Co + S, translation=T, center=Ce)
+    matrix = (R + Co + S).to(device)
+
+    tau = displacement_field(n, matrix=matrix, translation=T, center=Ce)
     assert len(tau) == 1 or len(tau) == B, "Batch size of input and transformation(s) must be the same!!"
     if len(tau) == 1:
         tau = tau.expand(B, -1, -1, -1)
